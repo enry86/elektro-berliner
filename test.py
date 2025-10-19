@@ -2,18 +2,24 @@ import time
 import fluidsynth
 import keyboard
 from keyboard._keyboard_event import KEY_DOWN, KEY_UP
-from mapping import KEYS_MAP
 from threading import Thread
+import pickle
+
+KEYS_MAP = {}
+with open('mapping.data', 'rb') as fin:
+    KEYS_MAP = pickle.load(fin)
+print(KEYS_MAP)
 
 KEY_PRESS = {}
-MIN_WAIT = .2
+KEY_PRESS = {}
+MIN_WAIT = .3
 
 fs = fluidsynth.Synth()
 fs.setting('synth.gain', 1.0)
 fs.start()
 
 sfid = fs.sfload("FluidR3_GM.sf2")
-fs.program_select(0, sfid, 0, 2)
+fs.program_select(0, sfid, 0, 0)
 
 print("Start chord")
 fs.noteon(0, 60, 80)
