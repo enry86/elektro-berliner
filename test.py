@@ -1,6 +1,7 @@
 import time
 import fluidsynth
-from pynput.keyboard import Key, Listener, KeyCode
+import keyboard
+from keyboard._keyboard_event import KEY_DOWN, KEY_UP
 from mapping import KEYS_MAP
 from threading import Thread
 
@@ -31,7 +32,7 @@ time.sleep(1.0)
 def get_note(key):
     note = 50
     try:
-        note = KEYS_MAP[key]
+        note = KEYS_MAP[key.scan_code]
     except:    
         print(f'Key {key} undefined')
     return note
@@ -44,7 +45,7 @@ def activate_note(note):
     
     curr_time = time.time()
     if last_activation == None or curr_time - last_activation > 10000:
-        fs.noteon(0, note, 80)
+        fs.noteon(0, note, 100)
         KEY_PRESS[note] = curr_time
 
 def deactivate_note(note, wait_time=0):
@@ -56,14 +57,14 @@ def deactivate_note(note, wait_time=0):
 def on_press(key):
     print('{0} pressed'.format(
         key))
-    note = get_note(str(key))
+    note = get_note(key)
     activate_note(note)
     
 
 def on_release(key):
     print('{0} release'.format(
         key))
-    note = get_note(str(key))
+    note = get_note(key)
     try:
         last_activation = KEY_PRESS[note]
     except:
@@ -80,15 +81,18 @@ def on_release(key):
         decay_thread.start()
     else:
         deactivate_note(note)
-    if key == Key.esc:
-        # Stop listener
-        return False
 
-# Collect events until released
-with Listener(
-        on_press=on_press,
-        on_release=on_release) as listener:
-    listener.join()
+def on_action(event):
+    if event.event_type == KEY_DOWN:
+        on_press(event)
 
+    elif event.event_type == KEY_UP:
+        on_release(event)
+
+
+keyboard.hook(lambda e: on_action(e))
+
+while True:
+    time.sleep(1)
 
 fs.delete()

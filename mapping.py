@@ -1,12 +1,12 @@
 KEYS_MAP = {}
 
-KEYS_MAP["'z'"] = 60
-KEYS_MAP["'x'"] = 61
-KEYS_MAP["'c'"] = 62
-KEYS_MAP["'v'"] = 63
-KEYS_MAP["'b'"] = 64
-KEYS_MAP["'n'"] = 65
-KEYS_MAP["'m'"] = 66
-KEYS_MAP["','"] = 67
-KEYS_MAP["'.'"] = 68
-KEYS_MAP["'-'"] = 69
+KEYS_MAP[44] = 60
+KEYS_MAP[45] = 61
+KEYS_MAP[46] = 62
+KEYS_MAP[47] = 63
+KEYS_MAP[48] = 64
+KEYS_MAP[49] = 65
+KEYS_MAP[50] = 66
+KEYS_MAP[51] = 67
+KEYS_MAP[52] = 68
+KEYS_MAP[53] = 69
