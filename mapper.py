@@ -20,7 +20,7 @@ def on_action(evt):
     code = evt.scan_code
     print(f'Key Pressed [{evt.scan_code} {evt.is_keypad} {evt.name}]')
     if code in keyboard_mapping:
-        print(f'Key [{code}] already pressed, saving')
+        print(f'Key [{code}] [{evt.name}] already pressed, saving')
         store_mapping(keyboard_mapping)
         running = False
     else:
