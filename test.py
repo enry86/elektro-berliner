@@ -36,9 +36,12 @@ print("End chord")
 time.sleep(1.0)
 
 def get_note(key):
+    code = key.scan_code
+    if key.is_keypad:
+        code += 300
     note = 50
     try:
-        note = KEYS_MAP[key.scan_code]
+        note = KEYS_MAP[code]
     except:    
         print(f'Key {key} undefined')
     return note
@@ -96,7 +99,7 @@ def on_action(event):
         on_release(event)
 
 
-keyboard.hook(lambda e: on_action(e))
+keyboard.hook(lambda e: on_action(e), suppress=True)
 
 while True:
     time.sleep(1)

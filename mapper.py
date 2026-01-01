@@ -18,8 +18,10 @@ def on_action(evt):
     if evt.event_type != KEY_DOWN:
         return
     code = evt.scan_code
+    if evt.is_keypad:
+        code += 300
     if code in keyboard_mapping:
-        print(f'Key [{code}] already pressed, saving')
+        print(f'Key [{code}] [{evt.name}] already pressed, saving')
         store_mapping(keyboard_mapping)
         running = False
     else:
@@ -27,7 +29,7 @@ def on_action(evt):
         print(f'Key [{code}] mapped to note [{note}] ')
         note += 1
 
-keyboard.hook(lambda e: on_action(e))
+keyboard.hook(lambda e: on_action(e), suppress=True)
 
 while running:
     time.sleep(1)
