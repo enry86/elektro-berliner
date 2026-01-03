@@ -2,7 +2,7 @@ import time
 import fluidsynth
 import keyboard
 from keyboard._keyboard_event import KEY_DOWN, KEY_UP
-from threading import Thread
+from threading import Thread, Semaphore
 import pickle
 
 KEYS_MAP = {}
@@ -11,8 +11,52 @@ with open('mapping.data', 'rb') as fin:
 print(KEYS_MAP)
 
 KEY_PRESS = {}
-KEY_PRESS = {}
+TIMERS = {}
 MIN_WAIT = .3
+SUSTAIN = False
+DEFAULT_WAIT = 10
+MAX_WAIT = 15
+
+
+class TimerThread:    
+    def __init__(self, synth, wait_time, min_wait, note):
+        self.synth = synth
+        self.note = note
+        self.playing = False
+        self.wait_time = wait_time
+        self.min_wait = min_wait
+        self.sem = Semaphore()
+    
+    def play_note(self):
+        curr_time = time.time()
+        self.playing = True
+        fs.noteon(0, self.note, 100)
+        self.sem.release()
+        while curr_time < self.off_time:
+            time.sleep(.1)
+            curr_time = time.time()
+            print(f'Is time to stop? [{curr_time < self.off_time}] [{curr_time}] [{self.off_time}]')
+        self.sem.acquire()
+        fs.noteoff(0, self.note)
+        self.playing = False
+        self.sem.release()
+    
+    def stop_note(self):
+        self.sem.acquire()
+        self.off_time = time.time() + (self.min_wait)
+        self.sem.release()
+
+    def start_play(self):
+        self.sem.acquire()
+        self.off_time = time.time() + (self.wait_time)
+        if not self.playing:            
+            t = Thread(target=self.play_note)
+            t.start()
+        else:
+            fs.noteon(0, self.note, 100)
+            self.sem.release()    
+
+        
 
 fs = fluidsynth.Synth()
 fs.setting('synth.gain', 1.0)
@@ -53,15 +97,22 @@ def activate_note(note):
         last_activation = None
     
     curr_time = time.time()
-    if last_activation == None or curr_time - last_activation > 10000:
-        fs.noteon(0, note, 100)
+    if last_activation == None or curr_time - last_activation > MAX_WAIT:
         KEY_PRESS[note] = curr_time
+        try:
+            timer_thread = TIMERS[note]
+        except:
+            timer_thread = TimerThread(fs, DEFAULT_WAIT, MIN_WAIT, note)
+            TIMERS[note] = timer_thread
+        timer_thread.start_play()
 
 def deactivate_note(note, wait_time=0):
-    if wait_time > 0:
-        time.sleep(wait_time)
-    fs.noteoff(0, note)
-    print(f'note {note} deactivated')  
+    try:
+        timer_thread = TIMERS[note]
+        timer_thread.stop_note()
+    except Exception as e:
+        print(f'ERROR!!! [{repr(e)}]')
+
 
 def on_press(key):
     print('{0} pressed'.format(
@@ -84,12 +135,7 @@ def on_release(key):
         return
     wait_time = (time.time() - last_activation) / 1000
     KEY_PRESS[note] = None
-    print(f'waiting {wait_time} s before stopping note')
-    if wait_time < MIN_WAIT:
-        decay_thread = Thread(target=deactivate_note, args=(note, MIN_WAIT-wait_time, ))
-        decay_thread.start()
-    else:
-        deactivate_note(note)
+    deactivate_note(note)
 
 def on_action(event):
     if event.event_type == KEY_DOWN:
