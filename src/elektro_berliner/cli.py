@@ -4,13 +4,10 @@ import keyboard
 from keyboard._keyboard_event import KEY_DOWN, KEY_UP
 from threading import Thread, Semaphore
 import pickle
+import sys
 
 fs = None
 KEYS_MAP = {}
-with open('mapping.data', 'rb') as fin:
-    KEYS_MAP = pickle.load(fin)
-print(KEYS_MAP)
-
 KEY_PRESS = {}
 TIMERS = {}
 MIN_WAIT = .3
@@ -123,12 +120,16 @@ def on_action(event):
         on_release(event)
 
 def main():
-    global fs
+    global fs, KEYS_MAP
+
+    with open(sys.argv[1], 'rb') as fin:
+        KEYS_MAP = pickle.load(fin)
+
     fs = fluidsynth.Synth()
     fs.setting('synth.gain', 1.0)
     fs.start()
 
-    sfid = fs.sfload("FluidR3_GM.sf2")
+    sfid = fs.sfload(sys.argv[2])
     fs.program_select(0, sfid, 0, 0)
 
     print("Start chord")
