@@ -5,6 +5,7 @@ from keyboard._keyboard_event import KEY_DOWN, KEY_UP
 from threading import Thread, Semaphore
 import pickle
 
+fs = None
 KEYS_MAP = {}
 with open('mapping.data', 'rb') as fin:
     KEYS_MAP = pickle.load(fin)
@@ -30,13 +31,13 @@ class TimerThread:
     def play_note(self):
         curr_time = time.time()
         self.playing = True
-        fs.noteon(0, self.note, 100)
+        self.synth.noteon(0, self.note, 100)
         self.sem.release()
         while curr_time < self.off_time:
             time.sleep(.1)
             curr_time = time.time()
         self.sem.acquire()
-        fs.noteoff(0, self.note)
+        self.synth.noteoff(0, self.note)
         self.playing = False
         self.sem.release()
     
@@ -52,31 +53,8 @@ class TimerThread:
             t = Thread(target=self.play_note)
             t.start()
         else:
-            fs.noteon(0, self.note, 100)
-            self.sem.release()    
-
-        
-
-fs = fluidsynth.Synth()
-fs.setting('synth.gain', 1.0)
-fs.start()
-
-sfid = fs.sfload("FluidR3_GM.sf2")
-fs.program_select(0, sfid, 0, 0)
-
-print("Start chord")
-fs.noteon(0, 60, 80)
-fs.noteon(0, 67, 80)
-fs.noteon(0, 76, 80)
-
-time.sleep(2)
-
-fs.noteoff(0, 60)
-fs.noteoff(0, 67)
-fs.noteoff(0, 76)
-print("End chord")
-
-time.sleep(1.0)
+            self.synth.noteon(0, self.note, 100)
+            self.sem.release()            
 
 def get_note(key):
     code = key.scan_code
@@ -97,15 +75,16 @@ def activate_note(note):
     
     curr_time = time.time()
     if last_activation == None or curr_time - last_activation > MAX_WAIT:
-        KEY_PRESS[note] = curr_time
         try:
             timer_thread = TIMERS[note]
         except:
             timer_thread = TimerThread(fs, DEFAULT_WAIT, MIN_WAIT, note)
             TIMERS[note] = timer_thread
         timer_thread.start_play()
+    KEY_PRESS[note] = curr_time
 
-def deactivate_note(note, wait_time=0):
+
+def deactivate_note(note):
     try:
         timer_thread = TIMERS[note]
         timer_thread.stop_note()
@@ -132,9 +111,9 @@ def on_release(key):
     if last_activation == None:
         print(f'note {note} never activated')
         return
-    wait_time = (time.time() - last_activation) / 1000
     KEY_PRESS[note] = None
-    deactivate_note(note)
+    if not SUSTAIN:
+        deactivate_note(note)
 
 def on_action(event):
     if event.event_type == KEY_DOWN:
@@ -143,10 +122,36 @@ def on_action(event):
     elif event.event_type == KEY_UP:
         on_release(event)
 
+def main():
+    global fs
+    fs = fluidsynth.Synth()
+    fs.setting('synth.gain', 1.0)
+    fs.start()
 
-keyboard.hook(lambda e: on_action(e), suppress=True)
+    sfid = fs.sfload("FluidR3_GM.sf2")
+    fs.program_select(0, sfid, 0, 0)
 
-while True:
-    time.sleep(1)
+    print("Start chord")
+    fs.noteon(0, 60, 80)
+    fs.noteon(0, 67, 80)
+    fs.noteon(0, 76, 80)
 
-fs.delete()
+    time.sleep(2)
+
+    fs.noteoff(0, 60)
+    fs.noteoff(0, 67)
+    fs.noteoff(0, 76)
+    print("End chord")
+
+    time.sleep(1.0)
+
+
+    keyboard.hook(lambda e: on_action(e), suppress=True)
+
+    while True:
+        time.sleep(1)
+
+    fs.delete()
+
+if __name__ == '__main__':
+    main()
