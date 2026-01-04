@@ -35,7 +35,6 @@ class TimerThread:
         while curr_time < self.off_time:
             time.sleep(.1)
             curr_time = time.time()
-            print(f'Is time to stop? [{curr_time < self.off_time}] [{curr_time}] [{self.off_time}]')
         self.sem.acquire()
         fs.noteoff(0, self.note)
         self.playing = False
