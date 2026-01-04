@@ -8,7 +8,7 @@ note = 21
 keyboard_mapping = {}
 savename = 'mapping.data'
 
-def store_mapping(keyboard_mappging):
+def store_mapping(keyboard_mapping):
     with open(savename, 'wb') as fout:
         pickle.dump(keyboard_mapping, fout)
 
@@ -29,7 +29,12 @@ def on_action(evt):
         print(f'Key [{code}] mapped to note [{note}] ')
         note += 1
 
-keyboard.hook(lambda e: on_action(e), suppress=True)
 
-while running:
-    time.sleep(1)
+def main():
+    keyboard.hook(lambda e: on_action(e), suppress=True)
+
+    while running:
+        time.sleep(1)
+
+if __name__ == '__main__':
+    main()

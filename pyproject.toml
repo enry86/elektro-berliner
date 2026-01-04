@@ -1,0 +1,19 @@
+[build-system]
+requires = [
+    "wheel",
+    "setuptools-scm[toml]>=8.0",
+]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "elektro_berliner"
+version = "1.0.0dev0"
+authors = [{name="Enrico Sartori", email="sartori.enrico@gmail.com" }]
+description = "Fluidsynth client for piano"
+readme = "README.md"
+dependencies = ["keyboard","pyfluidsynth"]
+requires-python = ">=3.11"
+
+[project.scripts]
+elektro-berliner = "elektro_berliner.cli:main"
+elektro-berliner-mapper = "elektro_berliner.mapper:main"

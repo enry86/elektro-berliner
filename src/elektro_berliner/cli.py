@@ -14,7 +14,7 @@ print(KEYS_MAP)
 KEY_PRESS = {}
 TIMERS = {}
 MIN_WAIT = .3
-SUSTAIN = False
+SUSTAIN = True
 DEFAULT_WAIT = 10
 MAX_WAIT = 15
 
