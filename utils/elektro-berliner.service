@@ -1,0 +1,12 @@
+[Unit]
+Description=Elektro-Berliner
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/opt/envs/venv-elektro-berliner
+ExecStart=/opt/envs/venv-elektro-berliner/bin/elektro-berliner /opt/elektro-berliner/mapping.data /opt/elektro-berliner/FluidR3_GM.sf2
+Restart=on-abort
+
+[Install]
+WantedBy=sound.target
