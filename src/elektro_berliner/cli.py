@@ -9,11 +9,13 @@ import sys
 fs = None
 KEYS_MAP = {}
 KEY_PRESS = {}
+KEY_EVENT = {}
 TIMERS = {}
 MIN_WAIT = .3
 SUSTAIN = False
 DEFAULT_WAIT = 10
 MAX_WAIT = 15
+EVT_COOLDOWN_TIME = .05
 
 
 class TimerThread:    
@@ -71,6 +73,9 @@ def activate_note(note):
         last_activation = None
     
     curr_time = time.time()
+
+    if last_activation:
+        print(f'Last event for note [{note}]: {curr_time - last_activation} s ago')
     if last_activation == None or curr_time - last_activation > MAX_WAIT:
         try:
             timer_thread = TIMERS[note]
@@ -78,28 +83,48 @@ def activate_note(note):
             timer_thread = TimerThread(fs, DEFAULT_WAIT, MIN_WAIT, note)
             TIMERS[note] = timer_thread
         timer_thread.start_play()
+        KEY_EVENT[note] = curr_time
     KEY_PRESS[note] = curr_time
 
 
 def deactivate_note(note):
+    curr_time = time.time()
+
     try:
         timer_thread = TIMERS[note]
         timer_thread.stop_note()
+        KEY_EVENT[note] = curr_time
     except Exception as e:
         print(f'ERROR!!! [{repr(e)}]')
 
 
 def on_press(key):
+    curr_time = time.time()
     print('{0} pressed'.format(
         key))
     note = get_note(key)
+    try:
+        last_evt = KEY_EVENT[note]
+        if curr_time - last_evt < EVT_COOLDOWN_TIME:
+            print(f'Note {note} has an event {curr_time - last_evt} s ago, ignoring event')
+            return
+    except:
+        print(f'First event for note {note}')
     activate_note(note)
     
 
 def on_release(key):
+    curr_time = time.time()
     print('{0} release'.format(
         key))
     note = get_note(key)
+    try:
+        last_evt = KEY_EVENT[note]
+        if curr_time - last_evt < EVT_COOLDOWN_TIME:
+            print(f'Note {note} has an event {curr_time - last_evt} s ago, ignoring event')
+            return
+    except:
+        print(f'First event for note {note}')
     try:
         last_activation = KEY_PRESS[note]
     except:
